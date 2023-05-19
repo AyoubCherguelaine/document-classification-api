@@ -1,0 +1,10 @@
+uvicorn
+fastapi
+pydantic==1.8.2
+requests==2.26.0
+numpy
+pandas
+pytesseract
+Pillow
+textract
+deta
