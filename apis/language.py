@@ -2,23 +2,6 @@ import requests
 import re
 from . import config, text_processing
 
-API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
-headers = {"Authorization": "Bearer " + config.huggingface_key}
-
-
-def query(payload):
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Raise an exception if the request was not successful
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        # Handle request-related exceptions
-        print(f"Request Exception: {e}")
-    except ValueError as e:
-        # Handle JSON decoding exceptions
-        print(f"JSON Decoding Exception: {e}")
-    return None
-
 
 def pred(text):
     try:
@@ -27,10 +10,15 @@ def pred(text):
         if text is None:
             return None
         
-        output = query({"inputs": text})
+        response = requests.post("https://team-language-detector-languagedetector.hf.space/run/predict", json={
+	            "data": [
+		                text,
+	                    ]
+                                }).json()
         
-        if output is not None:
-            return output[0][0]
+        if response is not None:
+            data = response["data"]
+            return data[0]["label"]
     except Exception as e:
         # Handle any other exceptions
         print(f"Exception: {e}")

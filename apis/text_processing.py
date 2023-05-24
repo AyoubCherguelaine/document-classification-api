@@ -1,3 +1,6 @@
+
+import re
+
 def preprocess_text(text):
     # Remove newline characters
     text = text.replace('\n', ' ')

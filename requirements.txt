@@ -8,3 +8,4 @@ pytesseract
 Pillow
 textract
 deta
+gradio_client

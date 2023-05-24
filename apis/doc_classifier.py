@@ -1,35 +1,35 @@
 import requests
 from . import config, text_processing
 import re
-
-API_URL = "https://api-inference.huggingface.co/models/AyoubChLin/Bart-MNLI-CNN_news"
-headers = {"Authorization": "Bearer " + config.huggingface_key}
+from gradio_client import Client
 
 
 
-def query(payload):
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Raise an exception if the request was not successful
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        # Handle request-related exceptions
-        print(f"Request Exception: {e}")
-        return None
-    except ValueError as e:
-        # Handle JSON decoding exceptions
-        print(f"JSON Decoding Exception: {e}")
-        return None
+
+
+import json
+
+
+
 
 def pred(text):
     try:
+        client = Client("https://ayoubchlin-ayoubchlin-bart-mnli-cnn-news.hf.space/" ,hf_token=config.huggingface_key)
+        labels  = ",".join(config.labels)
+        print(labels)
         text = text_processing.preprocess_text(text)
-        output = query({
-            "inputs": text,
-            "parameters": {"candidate_labels": config.labels},
-        })
-
-        return output
+        result = client.predict(
+                text,
+				labels,	# str representing input in 'Possible class names (comma-separated)' Textbox component
+				False,	# bool representing input in 'Allow multiple true classes' Checkbox component
+				api_name="/predict"
+        )
+        # Open the file in read mode
+        with open(result, 'r') as file:
+            # Read the contents of the file
+            json_data = json.load(file)
+        print(json_data)
+        return json_data["label"]
         
     except Exception as e:
         # Handle any other exceptions

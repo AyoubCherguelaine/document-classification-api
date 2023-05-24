@@ -1,7 +1,7 @@
-from fastapi import FastAPI, UploadFile,File, HTTPException
+from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-from apis import doc_classifier, language , transformation, config
+from apis import doc_classifier, language, transformation, config
 import shutil
 import os
 
@@ -13,93 +13,75 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 class TextInput(BaseModel):
     text: str
 
-@app.post("/api/classifier")
-async def read_root(text :TextInput ):
 
-    out= doc_classifier.pred(text.text)
-    if out != None:
+@app.post("/api/classifier")
+async def classify_text(text: TextInput):
+    out = doc_classifier.pred(text.text)
+    if out is not None:
         return out
     else:
-        return {"Problem":"no solution !"}
+        return {"Problem": "no solution!"}
 
 
 @app.post("/api/language")
-async def read_root(text :TextInput ):
-
-    out= language.pred(text.text)
-
-    if out != None:
+async def detect_language(text: TextInput):
+    out = language.pred(text.text)
+    if out is not None:
         return out
     else:
-        return {"Problem":"no solution !"}
-    
+        return {"Problem": "no solution!"}
+
 
 @app.post("/api/transformer")
-async def upload_file(file: UploadFile = File(...)):
-    # Save the file in the "/static" folder
+async def transform_file(file: UploadFile = File(...)):
     file_path = f"static/{file.filename}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     text = transformation.extract_text(file.filename, file_path)
-
-
     return {"filename": file.filename, "content": text}
 
 
-
-@app.post("/classifie")
-async def upload_file(file: UploadFile = File(...)):
-    # Save the file in the "/static" folder
+@app.post("/classify")
+async def classify_uploaded_file(file: UploadFile = File(...)):
     file_path = f"static/{file.filename}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-
-    # Extract text from the file
     text = transformation.extract_text(file.filename, file_path)
     
-    # Perform language detection
     lang = language.pred(text)
-
-    if lang != None:
-        if lang["label"] == "en":
-            # If the language is English, continue the process
-            # Perform document classification
-            topic = doc_classifier.pred(text)
+    if lang is not None:
+        topic = doc_classifier.pred(text)
+        if lang == "en":
             
-            if topic != None:
-                # Return the classification results
-                result = {
-                    "label": topic["labels"][0],
-                    "score": topic["scores"][0],
+            
+            result = {
+                    "label": topic,
                     "language": "en"
                 }
-            else:
-                # Document classification failed
-                result = {"exception": 4, "type": "classifier"}
         else:
-            # Non-English language detected
             result = {
-                "exception": 3,
                 "type": "not english",
-                "language": lang["label"]
+                "language": lang,
+                "label": topic
             }
     else:
-        # Language detection failed
         result = {"exception": 2, "type": "language detection"}
-    
-    # Delete the file after processing
     os.remove(file_path)
-    
     return result
 
+
 @app.post("/configlabel")
-async def configLabel(text :TextInput):
-    # Remove the square brackets and spaces
+async def configure_labels(text: TextInput):
     cleaned_str = text.text.strip('[]').replace(' ', '')
-
-    # Split the string by comma and create a list
     result_list = cleaned_str.split(',')
-
     config.labels = result_list
 
-    
+
+@app.get("/labels")
+async def get_labels():
+    return config.labels
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app,  port=4002)

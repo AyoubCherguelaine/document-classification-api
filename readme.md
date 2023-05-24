@@ -28,8 +28,8 @@ pip install -r requirements.txt
 
 ## Usage
 
-### create a 'config.py'
- create 'config.py' in './apis' containe 
+### create a config.py
+ create config.py in ./apis containe 
 
  ```python 
  labels = [] #labels list ["news","sport"]
@@ -44,4 +44,4 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-You can check the /docs endpoint to access the documentation.
+you can check /docs endpoint to get the documentation 
